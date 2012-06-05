@@ -8,7 +8,6 @@ from MySQLdb import cursors
 import commands
  
 def conn_master1():
-  #host     = '192.168.198.203'
   host     = '127.0.0.1'
   port     = '3306'
   username = 'root'
@@ -23,7 +22,6 @@ def conn_master1():
                          cursorclass = MySQLdb.cursors.SSCursor)
 
 def conn_master2():
-  #host     = '192.168.198.203'
   host     = '127.0.0.1'
   port     = '3307'
   username = 'root'

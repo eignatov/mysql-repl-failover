@@ -403,13 +403,15 @@ If you fail a check for five consecutive times life and death of M1, start the f
 2012-06-05 15:24:15,345 INFO success: mysql-proxy-slave-failover2 entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
 </pre>
 Mysql-proxy process four stops, mysql-proxy for the definition of when a failover starts, M2 and S2 only the DB request, skip. To read_only = off of M2.
+
 <pre>
-==> mysqlcheck.log <==
+==> mysqlcheck.log 
 failover finished! : master2 is new master
 kill this daemon until master1 failback!
 failover finished! : master2 is new master
 stop this daemon until master1 failback!
 </pre>
+
 Completion of the failover process.
 ## Failure case of M2
 M2 is shut down intentionally.

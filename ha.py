@@ -1,5 +1,27 @@
 #!/opt/bin/python
 # -*- coding: utf-8 -*-
+#
+# Copyright (c) 2012, utada4@gmail.com, https://github.com/utada/mysql-repl-failover
+# 
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+# 
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+# 
 
 import sys
 import MySQLdb
@@ -12,7 +34,7 @@ def conn_master1():
   port     = '3306'
   username = 'root'
   password = ''
-  dbname='mysql'
+  dbname   = 'mysql'
   return MySQLdb.connect(host=host,
                          db=dbname,
                          user=username,
@@ -26,7 +48,7 @@ def conn_master2():
   port     = '3307'
   username = 'root'
   password = ''
-  dbname='mysql'
+  dbname   = 'mysql'
   return MySQLdb.connect(host=host,
                          db=dbname,
                          user=username,
@@ -81,7 +103,7 @@ def start_slave(conn):
   return True
 
 def failover1():
-  # when master1 server down
+  # when master1 down
   sys.stderr.write("failover1\n")
   commands.getoutput("supervisorctl stop mysql-proxy-master1")
   commands.getoutput("supervisorctl stop mysql-proxy-master2")
@@ -96,12 +118,12 @@ def failover1():
   commands.getoutput("supervisorctl start mysql-proxy-slave-failover2")
   time.sleep(5)
   while 1:
-    sys.stderr.write("failover finished! : master2 is new master\n")
-    sys.stderr.write("kill this daemon until master1 failback!\n")
+    sys.stderr.write("failover finished : master2 is new master now\n")
+    sys.stderr.write("stop this daemon until master1 failback\n")
     time.sleep(5)
 
 def failover2():
-  # when master2 server down
+  # when master2 down
   sys.stderr.write("failover2\n")
   commands.getoutput("supervisorctl stop mysql-proxy-slave1")
   commands.getoutput("supervisorctl stop mysql-proxy-slave2")
@@ -110,8 +132,8 @@ def failover2():
   commands.getoutput("supervisorctl start mysql-proxy-slave-failover4")
   time.sleep(5)
   while 1:
-    sys.stderr.write("failover finished! : master2/slave4 has been purged\n")
-    sys.stderr.write("kill this daemon until master2 failback!\n")
+    sys.stderr.write("failover finished : master2/slave4 has been purged\n")
+    sys.stderr.write("stop this daemon until master2 failback!\n")
     time.sleep(5)
   
 if __name__ == '__main__':

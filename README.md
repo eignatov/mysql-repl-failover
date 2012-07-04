@@ -62,25 +62,28 @@ autorestart=true
 to register supervisor, the definition for mysql-proxy connection app.
 
 - Mysql-proxy for connecting to master  
- - mysql-proxy-master1  
- - mysql-proxy-master2  
-- Mysql-proxy for connecting to the master (for failover when M1-down)
- - mysql-proxy-master-failover1
- - mysql-proxy-master-failover2
+ - mysql-proxy-master1_1  
+ - mysql-proxy-master1_2  
+- Mysql-proxy for connecting to the M2 master (for when failover to M2)
+ - mysql-proxy-master2_1
+ - mysql-proxy-master2_2
 - Mysql-proxy connection for slave
- - mysql-proxy-slave1
- - mysql-proxy-slave2
-- Mysql-proxy for slave connection (for failover when M1-down)
- - mysql-proxy-slave-failover1
- - mysql-proxy-slave-failover2
-- Mysql-proxy for slave connection (for failover when M2-down)
- - mysql-proxy-slave-failover3
- - mysql-proxy-slave-failover3
+ - mysql-proxy-slave1_1
+ - mysql-proxy-slave1_2
+- Mysql-proxy for slave connection (purge S1 when M1-down)
+ - mysql-proxy-slave2_1
+ - mysql-proxy-slave2_2
+- Mysql-proxy for slave connection (purge M2,S2 when M2-down)
+ - mysql-proxy-slave3_1
+ - mysql-proxy-slave3_2
+- Mysql-proxy for slave connection (when M2 is master)
+ - mysql-proxy-slave4_1
+ - mysql-proxy-slave4_2
 
 vim /etc/supervisord.conf
 
 <pre>
-[program:mysql-proxy-master1]
+[program:mysql-proxy-master1_1]
 command=/usr/local/mysql-proxy/bin/mysql-proxy --proxy-address 127.0.0.1:3031 --proxy-backend-addresses 127.0.0.1:3306
 stdout_logfile_maxbytes=1MB
 stderr_logfile_maxbytes=1MB
@@ -88,7 +91,7 @@ stdout_logfile=/var/log/supervisor/%(program_name)s.log
 stderr_logfile=/var/log/supervisor/%(program_name)s.log
 autorestart=false
 
-[program:mysql-proxy-master2]
+[program:mysql-proxy-master2_1]
 command=/usr/local/mysql-proxy/bin/mysql-proxy --proxy-address 127.0.0.1:3032 --proxy-backend-addresses 127.0.0.1:3306
 stdout_logfile_maxbytes=1MB
 stderr_logfile_maxbytes=1MB
@@ -96,7 +99,7 @@ stdout_logfile=/var/log/supervisor/%(program_name)s.log
 stderr_logfile=/var/log/supervisor/%(program_name)s.log
 autorestart=false
 
-[program:mysql-proxy-master-failover1]
+[program:mysql-proxy-master2_1]
 command=/usr/local/mysql-proxy/bin/mysql-proxy --proxy-address 127.0.0.1:3031 --proxy-backend-addresses 127.0.0.1:3307
 stdout_logfile_maxbytes=1MB
 stderr_logfile_maxbytes=1MB
@@ -104,7 +107,7 @@ stdout_logfile=/var/log/supervisor/%(program_name)s.log
 stderr_logfile=/var/log/supervisor/%(program_name)s.log
 autorestart=false
 
-[program:mysql-proxy-master-failover2]
+[program:mysql-proxy-master2_2]
 command=/usr/local/mysql-proxy/bin/mysql-proxy --proxy-address 127.0.0.1:3032 --proxy-backend-addresses 127.0.0.1:3307
 stdout_logfile_maxbytes=1MB
 stderr_logfile_maxbytes=1MB
@@ -112,7 +115,7 @@ stdout_logfile=/var/log/supervisor/%(program_name)s.log
 stderr_logfile=/var/log/supervisor/%(program_name)s.log
 autorestart=false
 
-[program:mysql-proxy-slave1]
+[program:mysql-proxy-slave1_1]
 command=/usr/local/mysql-proxy/bin/mysql-proxy --proxy-address 127.0.0.1:3041 --proxy-backend-addresses 127.0.0.1:3307 --proxy-backend-addresses 127.0.0.1:3308 --proxy-backend-addresses 127.0.0.1:3309
 stdout_logfile_maxbytes=1MB
 stderr_logfile_maxbytes=1MB
@@ -120,7 +123,7 @@ stdout_logfile=/var/log/supervisor/%(program_name)s.log
 stderr_logfile=/var/log/supervisor/%(program_name)s.log
 autorestart=false
 
-[program:mysql-proxy-slave2]
+[program:mysql-proxy-slave1_2]
 command=/usr/local/mysql-proxy/bin/mysql-proxy --proxy-address 127.0.0.1:3042 --proxy-backend-addresses 127.0.0.1:3307 --proxy-backend-addresses 127.0.0.1:3308 --proxy-backend-addresses 127.0.0.1:3309
 stdout_logfile_maxbytes=1MB
 stderr_logfile_maxbytes=1MB
@@ -128,7 +131,7 @@ stdout_logfile=/var/log/supervisor/%(program_name)s.log
 stderr_logfile=/var/log/supervisor/%(program_name)s.log
 autorestart=false
 
-[program:mysql-proxy-slave-failover1]
+[program:mysql-proxy-slave2_1]
 command=/usr/local/mysql-proxy/bin/mysql-proxy --proxy-address 127.0.0.1:3041 --proxy-backend-addresses 127.0.0.1:3309
 stdout_logfile_maxbytes=1MB
 stderr_logfile_maxbytes=1MB
@@ -136,7 +139,7 @@ stdout_logfile=/var/log/supervisor/%(program_name)s.log
 stderr_logfile=/var/log/supervisor/%(program_name)s.log
 autorestart=false
 
-[program:mysql-proxy-slave-failover2]
+[program:mysql-proxy-slave2_2]
 command=/usr/local/mysql-proxy/bin/mysql-proxy --proxy-address 127.0.0.1:3042 --proxy-backend-addresses 127.0.0.1:3309
 stdout_logfile_maxbytes=1MB
 stderr_logfile_maxbytes=1MB
@@ -144,7 +147,7 @@ stdout_logfile=/var/log/supervisor/%(program_name)s.log
 stderr_logfile=/var/log/supervisor/%(program_name)s.log
 autorestart=false
 
-[program:mysql-proxy-slave-failover3]
+[program:mysql-proxy-slave3_1]
 command=/usr/local/mysql-proxy/bin/mysql-proxy --proxy-address 127.0.0.1:3041 --proxy-backend-addresses 127.0.0.1:3308
 stdout_logfile_maxbytes=1MB
 stderr_logfile_maxbytes=1MB
@@ -152,7 +155,7 @@ stdout_logfile=/var/log/supervisor/%(program_name)s.log
 stderr_logfile=/var/log/supervisor/%(program_name)s.log
 autorestart=false
 
-[program:mysql-proxy-slave-failover4]
+[program:mysql-proxy-slave3_2]
 command=/usr/local/mysql-proxy/bin/mysql-proxy --proxy-address 127.0.0.1:3042 --proxy-backend-addresses 127.0.0.1:3308
 stdout_logfile_maxbytes=1MB
 stderr_logfile_maxbytes=1MB
@@ -164,35 +167,35 @@ autorestart=false
 
 Configured to boot via init the Supervisor.
 
-sudo / etc / rc.d / init.d / supervisord
+    sudo /etc/rc.d/init.d/supervisord
 
 <pre>
-#! / bin / sh
+#! /bin/sh
 #
 # Supervisord - this script starts and stops the supervisord daemon
 #
 # Chkconfig: - 90 10
-# Description: Supervisor is a client / server system that allows \
+# Description: Supervisor is a client/server system that allows \
 # Its users to monitor and control a number of \
 # Processes on UNIX-like operating systems.
 # Processname: supervisord
-# Config: / etc / supervisord.conf
-# Pidfile: / tmp / supervisord.pid
+# Config: /etc/supervisord.conf
+# Pidfile: /tmp/supervisord.pid
 
 # Source function library.
-. / Etc / init.d / functions
+. /etc/init.d/functions
 
 # Source networking configuration.
-. / Etc / sysconfig / network
+. /etc/sysconfig/network
 
 # Check that networking is up.
 ["$ NETWORKING" = "no"] && exit 0
 
 RETVAL = 0
-supervisord = "/ usr / bin / supervisord"
+supervisord = "/usr/bin/supervisord"
 prog = $ (basename $ supervisord)
-pidfile = / tmp / supervisord.pid
-lockfile = / var / lock / subsys / supervisord
+pidfile = /tmp/supervisord.pid
+lockfile = /var/lock/subsys/supervisord
 
 start () {
      echo-n $ "Starting $ prog:"
@@ -250,7 +253,7 @@ exit $ RETVAL
 
 ## Flow details
 
-Configuration DB 
+setup DB as
 
 - M1 (192.168.0.1 port: 3306)
 - M2 (192.168.0.1 port: 3307)
@@ -465,6 +468,5 @@ failover finished:! master2/slave4 has been purged
 kill this daemon until master2 failback!
 </pre>
 Completion of the failover process.
-
 
 

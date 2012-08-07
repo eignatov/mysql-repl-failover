@@ -1,4 +1,4 @@
-#!/opt/bin/python
+#!/usr/bin/env python26
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2012, UTADA katsuya
@@ -147,6 +147,42 @@ def start_slave(conn):
     return False
   return True
 
+def rpl_semi_sync_master_on(conn):
+  cur = conn.cursor()
+  sql = "set global rpl_semi_sync_master_enabled = ON"
+  try:
+    cur.execute(sql)
+  except:
+    return False
+  return True
+
+def rpl_semi_sync_master_off(conn):
+  cur = conn.cursor()
+  sql = "set global rpl_semi_sync_master_enabled = OFF"
+  try:
+    cur.execute(sql)
+  except:
+    return False
+  return True
+
+def rpl_semi_sync_slave_on(conn):
+  cur = conn.cursor()
+  sql = "set global rpl_semi_sync_slave_enabled = ON"
+  try:
+    cur.execute(sql)
+  except:
+    return False
+  return True
+
+def rpl_semi_sync_slave_off(conn):
+  cur = conn.cursor()
+  sql = "set global rpl_semi_sync_slave_enabled = OFF"
+  try:
+    cur.execute(sql)
+  except:
+    return False
+  return True
+
 def failover1():
   # when master1 down
   sys.stderr.write("failover1\n")
@@ -227,6 +263,21 @@ def slave0_error():
     sys.stderr.write("stop this daemon until master2 failback!\n")
     time.sleep(5)
 
+def slave0_2_error():
+  # master2 is master.
+  # when master1 slave is stopped
+  sys.stderr.write("slave at master1 error\n")
+  #commands.getoutput("supervisorctl stop mysql-proxy-slave2_1")
+  #commands.getoutput("supervisorctl stop mysql-proxy-slave2_2")
+  time.sleep(5)
+  #commands.getoutput("supervisorctl start mysql-proxy-slave3_1")
+  #commands.getoutput("supervisorctl start mysql-proxy-slave3_2")
+  time.sleep(5)
+  while 1:
+    sys.stderr.write("failover finished : master2/slave2 has been purged\n")
+    sys.stderr.write("stop this daemon until master2 failback!\n")
+    time.sleep(5)
+
 def slave1_error():
   # when slave1 slave is stopped
   sys.stderr.write("slave1 error\n")
@@ -256,12 +307,14 @@ def slave2_error():
     time.sleep(5)
 
 def watch_m1():
+  stop_slave(master1)
+  read_only_off(master1)
+  read_only_on(master2)
+  start_slave(master2)
   commands.getoutput("supervisorctl start mysql-proxy-master1_1")
   commands.getoutput("supervisorctl start mysql-proxy-master1_2")
   commands.getoutput("supervisorctl start mysql-proxy-slave1_1")
   commands.getoutput("supervisorctl start mysql-proxy-slave1_2")
-  read_only_on(master2)
-  start_slave(master2)
   i = 0
   while 1:
     # check master1
@@ -344,8 +397,14 @@ def watch_m1():
     i += 1
 
 def watch_m2():
-  stop_slave(master1)
-  read_only_off(master1)
+  stop_slave(master2)
+  read_only_off(master2)
+  read_only_on(master1)
+  start_slave(master1)
+  commands.getoutput("supervisorctl start mysql-proxy-master2_1")
+  commands.getoutput("supervisorctl start mysql-proxy-master2_2")
+  commands.getoutput("supervisorctl start mysql-proxy-slave4_1")
+  commands.getoutput("supervisorctl start mysql-proxy-slave4_2")
   i = 0
   while 1:
     # check master1
@@ -374,6 +433,54 @@ def watch_m2():
       if master2_err_cnt > 5:
         sys.stderr.write("master2 failing: failover starting\n")
         failover4()
+        break
+
+    # check replication slave at master1
+    sys.stderr.write("%d: check replication slave on master1 at %s\n" % (i, time.ctime()))
+    r = is_slave_running(master1)
+    for row in r:
+      slave_running = row[1]
+    if slave_running == "ON":
+      slave0_err_cnt = 0
+      sys.stderr.write("ok\n")
+    else:
+      sys.stderr.write("replication slave stop detected on master1!\n")
+      slave0_err_cnt += 1
+      if slave0_err_cnt > 5:
+        sys.stderr.write("replication error on master1: purging master1 from slave\n")
+        slave0_2_error()
+        break
+
+    # check replication slave at slave1
+    sys.stderr.write("%d: check replication slave on slave1 at %s\n" % (i, time.ctime()))
+    r = is_slave_running(slave1)
+    for row in r:
+      slave_running = row[1]
+    if slave_running == "ON":
+      slave1_err_cnt = 0
+      sys.stderr.write("ok\n")
+    else:
+      sys.stderr.write("replication slave stop detected on slave1! \n")
+      slave1_err_cnt += 1
+      if slave1_err_cnt > 5:
+        sys.stderr.write("replication error on slave1: purging slave1 from slave\n")
+        slave1_error()
+        break
+
+    # check replication slave at slave2
+    sys.stderr.write("%d: check replication slave on slave2 at %s\n" % (i, time.ctime()))
+    r = is_slave_running(slave2)
+    for row in r:
+      slave_running = row[1]
+    if slave_running == "ON":
+      slave2_err_cnt = 0
+      sys.stderr.write("ok\n")
+    else:
+      sys.stderr.write("replication slave stop detected on slave2! \n")
+      slave2_err_cnt += 1
+      if slave2_err_cnt > 5:
+        sys.stderr.write("replication error on slave2: purging slave2 from slave\n")
+        slave2_error()
         break
 
     time.sleep(5)

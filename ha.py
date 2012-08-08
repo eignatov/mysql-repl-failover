@@ -28,6 +28,7 @@ import MySQLdb
 import time
 from MySQLdb import cursors
 import commands
+import ConfigParser
  
 def conn_master1():
   ### edit environment

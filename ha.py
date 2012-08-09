@@ -409,6 +409,9 @@ def watch_m2():
         sys.stderr.write("master1 failing: failover starting\n")
         failover3()
         break
+      time.sleep(5)
+      i += 1
+      continue
 
     # check master2
     sys.stderr.write("%d: master2 status check at %s\n" % (i, time.ctime()))
@@ -423,6 +426,9 @@ def watch_m2():
         sys.stderr.write("master2 failing: failover starting\n")
         failover4()
         break
+      time.sleep(5)
+      i += 1
+      continue
 
     # check replication slave at master1
     sys.stderr.write("%d: check replication slave on master1 at %s\n" % (i, time.ctime()))
@@ -439,6 +445,9 @@ def watch_m2():
         sys.stderr.write("replication error on master1: purging master1 from slave\n")
         slave0_2_error()
         break
+      time.sleep(5)
+      i += 1
+      continue
 
     # check replication slave at slave1
     sys.stderr.write("%d: check replication slave on slave1 at %s\n" % (i, time.ctime()))
@@ -455,6 +464,9 @@ def watch_m2():
         sys.stderr.write("replication error on slave1: purging slave1 from slave\n")
         slave1_error()
         break
+      time.sleep(5)
+      i += 1
+      continue
 
     # check replication slave at slave2
     sys.stderr.write("%d: check replication slave on slave2 at %s\n" % (i, time.ctime()))
@@ -471,6 +483,9 @@ def watch_m2():
         sys.stderr.write("replication error on slave2: purging slave2 from slave\n")
         slave2_error()
         break
+      time.sleep(5)
+      i += 1
+      continue
 
     time.sleep(5)
     i += 1

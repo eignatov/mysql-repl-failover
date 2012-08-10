@@ -32,44 +32,69 @@ import commands
 import ConfigParser
  
 def conn_master1(conf):
-  return MySQLdb.connect(host=conf.get('m1', 'host'),
+  try:
+    conn = MySQLdb.connect(host=conf.get('m1', 'host'),
                          db='mysql',
                          user=conf.get('m1', 'username'),
                          passwd=conf.get('m1','password'),
                          port=int(conf.get('m1', 'port')),
                          charset="utf8",
                          cursorclass = MySQLdb.cursors.SSCursor)
+  except:
+    return False
+  return conn
 
 def conn_master2(conf):
-  return MySQLdb.connect(host=conf.get('m2', 'host'),
+  try:
+    conn = MySQLdb.connect(host=conf.get('m2', 'host'),
                          db='mysql',
                          user=conf.get('m2', 'username'),
                          passwd=conf.get('m2','password'),
                          port=int(conf.get('m2', 'port')),
                          charset="utf8",
                          cursorclass = MySQLdb.cursors.SSCursor)
+  except:
+    return False
+  return conn
 
 def conn_slave1(conf):
-  return MySQLdb.connect(host=conf.get('s1', 'host'),
-                         db='mysql',
-                         user=conf.get('s1', 'username'),
-                         passwd=conf.get('s1','password'),
-                         port=int(conf.get('s1', 'port')),
-                         charset="utf8",
-                         cursorclass = MySQLdb.cursors.SSCursor)
+  try:
+    conn = MySQLdb.connect(host=conf.get('s1', 'host'),
+                   db='mysql',
+                   user=conf.get('s1', 'username'),
+                   passwd=conf.get('s1','password'),
+                   port=int(conf.get('s1', 'port')),
+                   charset="utf8",
+                   cursorclass = MySQLdb.cursors.SSCursor)
+  except:
+    return False
+  return conn
 
 def conn_slave2(conf):
-  return MySQLdb.connect(host=conf.get('s2', 'host'),
+  try:
+    conn = MySQLdb.connect(host=conf.get('s2', 'host'),
                          db='mysql',
                          user=conf.get('s2', 'username'),
                          passwd=conf.get('s2','password'),
                          port=int(conf.get('s2', 'port')),
                          charset="utf8",
                          cursorclass = MySQLdb.cursors.SSCursor)
+  except:
+    return False
+  return conn
 
 def master_status(conn):
   cur = conn.cursor()
   sql = "show master status"
+  try:
+    cur.execute(sql)
+  except:
+    return False
+  return cur.fetchall()
+
+def slave_status(conn):
+  cur = conn.cursor()
+  sql = "show slave status"
   try:
     cur.execute(sql)
   except:
@@ -158,6 +183,7 @@ def rpl_semi_sync_slave_off(conn):
   return True
 
 def failover1():
+  master2 = conn_master2(conf)
   # when master1 down
   sys.stderr.write("failover1\n")
   commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl stop mysql-proxy-master1_1")
@@ -225,7 +251,6 @@ def failover4():
 
 def slave0_error():
   # when master2 slave is stopped
-  sys.stderr.write("slave0 error\n")
   commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl stop mysql-proxy-slave1_1")
   commands.getoutput("ssh -t -t utada@ha6 sudo supervisorctl stop mysql-proxy-slave1_2")
   time.sleep(5)
@@ -281,6 +306,9 @@ def slave2_error():
     time.sleep(5)
 
 def watch_m1():
+  master1 = conn_master1(conf)
+  master2 = conn_master2(conf)
+
   stop_slave(master1)
   read_only_off(master1)
   read_only_on(master2)
@@ -293,8 +321,7 @@ def watch_m1():
   while 1:
     # check master1
     sys.stderr.write("%d: check master1 status at %s\n" % (i, time.ctime()))
-    r = master_status(master1)
-    if r and len(r) > 0:
+    if (conn_master1(conf)):
       master1_err_cnt = 0
       sys.stderr.write("ok\n")
     else:
@@ -310,8 +337,7 @@ def watch_m1():
 
     # check master2
     sys.stderr.write("%d: check master2 status at %s\n" % (i, time.ctime()))
-    r = master_status(master2)
-    if r and len(r) > 0:
+    if (conn_master2(conf)):
       master2_err_cnt = 0
       sys.stderr.write("ok\n")
     else:
@@ -325,7 +351,40 @@ def watch_m1():
       i += 1
       continue
 
+    # status check slave1
+    sys.stderr.write("%d: check slave1 status at %s\n" % (i, time.ctime()))
+    if (conn_slave1(conf)):
+      slave1_err_cnt = 0
+      sys.stderr.write("ok\n")
+    else:
+      sys.stderr.write("slave1 fail detected!\n")
+      slave1_err_cnt += 1
+      if slave1_err_cnt > 5:
+        sys.stderr.write("slave1 status error: purging slave1 from slave\n")
+        slave1_error()
+        break
+      time.sleep(5)
+      i += 1
+      continue
+
+    # status check slave2
+    sys.stderr.write("%d: check slave2 status at %s\n" % (i, time.ctime()))
+    if (conn_slave2(conf)):
+      slave1_err_cnt = 0
+      sys.stderr.write("ok\n")
+    else:
+      sys.stderr.write("slave2 fail detected!\n")
+      slave2_err_cnt += 1
+      if slave2_err_cnt > 5:
+        sys.stderr.write("slave2 status error: purging slave2 from slave\n")
+        slave2_error()
+        break
+      time.sleep(5)
+      i += 1
+      continue
+
     # check replication slave at master2
+    master2 = conn_master2(conf)
     sys.stderr.write("%d: check replication slave on master2 at %s\n" % (i, time.ctime()))
     r = is_slave_running(master2)
     for row in r:
@@ -345,6 +404,7 @@ def watch_m1():
       continue
 
     # check replication slave at slave1
+    slave1 = conn_slave1(conf)
     sys.stderr.write("%d: check replication slave on slave1 at %s\n" % (i, time.ctime()))
     r = is_slave_running(slave1)
     for row in r:
@@ -364,6 +424,7 @@ def watch_m1():
       continue
 
     # check replication slave at slave2
+    slave2 = conn_slave2(conf)
     sys.stderr.write("%d: check replication slave on slave2 at %s\n" % (i, time.ctime()))
     r = is_slave_running(slave2)
     for row in r:
@@ -386,6 +447,9 @@ def watch_m1():
     i += 1
 
 def watch_m2():
+  master1 = conn_master1(conf)
+  master2 = conn_master2(conf)
+
   stop_slave(master2)
   read_only_off(master2)
   read_only_on(master1)
@@ -398,8 +462,7 @@ def watch_m2():
   while 1:
     # check master1
     sys.stderr.write("%d: master1 status check at %s\n" % (i, time.ctime()))
-    r = master_status(master1)
-    if r and len(r) > 0:
+    if (conn_master1(conf)):
       master1_err_cnt = 0
       sys.stderr.write("ok\n")
     else:
@@ -415,8 +478,7 @@ def watch_m2():
 
     # check master2
     sys.stderr.write("%d: master2 status check at %s\n" % (i, time.ctime()))
-    r = master_status(master2)
-    if r and len(r) > 0:
+    if (conn_master2(conf)):
       master2_err_cnt = 0
       sys.stderr.write("ok\n")
     else:
@@ -430,7 +492,41 @@ def watch_m2():
       i += 1
       continue
 
+    # status check slave1
+    sys.stderr.write("%d: check slave1 status at %s\n" % (i, time.ctime()))
+    r = slave_status(slave1)
+    if (conn_slave1(conf)):
+      slave1_err_cnt = 0
+      sys.stderr.write("ok\n")
+    else:
+      sys.stderr.write("slave1 fail detected!\n")
+      slave1_err_cnt += 1
+      if slave1_err_cnt > 5:
+        sys.stderr.write("slave1 status error: purging slave1 from slave\n")
+        slave1_error()
+        break
+      time.sleep(5)
+      i += 1
+      continue
+
+    # status check slave2
+    sys.stderr.write("%d: check slave2 status at %s\n" % (i, time.ctime()))
+    if (conn_slave2(conf)):
+      slave1_err_cnt = 0
+      sys.stderr.write("ok\n")
+    else:
+      sys.stderr.write("slave2 fail detected!\n")
+      slave2_err_cnt += 1
+      if slave2_err_cnt > 5:
+        sys.stderr.write("slave2 status error: purging slave2 from slave\n")
+        slave2_error()
+        break
+      time.sleep(5)
+      i += 1
+      continue
+
     # check replication slave at master1
+    master1 = conn_master1(conf)
     sys.stderr.write("%d: check replication slave on master1 at %s\n" % (i, time.ctime()))
     r = is_slave_running(master1)
     for row in r:
@@ -450,6 +546,7 @@ def watch_m2():
       continue
 
     # check replication slave at slave1
+    slave1 = conn_slave1(conf)
     sys.stderr.write("%d: check replication slave on slave1 at %s\n" % (i, time.ctime()))
     r = is_slave_running(slave1)
     for row in r:
@@ -469,6 +566,7 @@ def watch_m2():
       continue
 
     # check replication slave at slave2
+    slave2 = conn_slave2(conf)
     sys.stderr.write("%d: check replication slave on slave2 at %s\n" % (i, time.ctime()))
     r = is_slave_running(slave2)
     for row in r:
@@ -502,10 +600,10 @@ if __name__ == '__main__':
     print 'Usage: ha.py <m1|m2>'
     quit()
 
-  master1 = conn_master1(conf)
-  master2 = conn_master2(conf)
-  slave1 = conn_slave1(conf)
-  slave2 = conn_slave2(conf)
+  #master1 = conn_master1(conf)
+  #master2 = conn_master2(conf)
+  #slave1 = conn_slave1(conf)
+  #slave2 = conn_slave2(conf)
   if (argvs[1] == 'm1'):
     ## when m1 is master
     watch_m1()

@@ -186,17 +186,17 @@ def failover1():
   master2 = conn_master2(conf)
   # when master1 down
   sys.stderr.write("failover1\n")
-  commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl stop mysql-proxy-master1_1")
-  commands.getoutput("ssh -t -t utada@ha6 sudo supervisorctl stop mysql-proxy-master1_2")
-  commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl stop mysql-proxy-slave1_1")
-  commands.getoutput("ssh -t -t utada@ha6 sudo supervisorctl stop mysql-proxy-slave1_2")
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl stop mysql-proxy-master1_1")
+  commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl stop mysql-proxy-master1_2")
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl stop mysql-proxy-slave1_1")
+  commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl stop mysql-proxy-slave1_2")
   time.sleep(5)
   stop_slave(master2)
   read_only_off(master2)
-  commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl start mysql-proxy-master2_1")
-  commands.getoutput("ssh -t -t utada@ha6 sudo supervisorctl start mysql-proxy-master2_2")
-  commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl start mysql-proxy-slave2_1")
-  commands.getoutput("ssh -t -t utada@ha6 sudo supervisorctl start mysql-proxy-slave2_2")
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl start mysql-proxy-master2_1")
+  commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl start mysql-proxy-master2_2")
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl start mysql-proxy-slave2_1")
+  commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl start mysql-proxy-slave2_2")
   time.sleep(5)
   while 1:
     sys.stderr.write("failover finished : master2 is new master now\n")
@@ -206,11 +206,11 @@ def failover1():
 def failover2():
   # when master2 down
   sys.stderr.write("failover2\n")
-  commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl stop mysql-proxy-slave1_1")
-  commands.getoutput("ssh -t -t utada@ha6 sudo supervisorctl stop mysql-proxy-slave1_2")
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl stop mysql-proxy-slave1_1")
+  commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl stop mysql-proxy-slave1_2")
   time.sleep(5)
-  commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl start mysql-proxy-slave3_1")
-  commands.getoutput("ssh -t -t utada@ha6 sudo supervisorctl start mysql-proxy-slave3_2")
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl start mysql-proxy-slave3_1")
+  commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl start mysql-proxy-slave3_2")
   time.sleep(5)
   while 1:
     sys.stderr.write("failover finished : master2/slave2 has been purged\n")
@@ -220,11 +220,11 @@ def failover2():
 def failover3():
   # master1 down (M2 is master)
   sys.stderr.write("failover3(M1 down)(M2 is master)\n")
-  commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl stop mysql-proxy-slave4_1")
-  commands.getoutput("ssh -t -t utada@ha6 sudo supervisorctl stop mysql-proxy-slave4_2")
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl stop mysql-proxy-slave4_1")
+  commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl stop mysql-proxy-slave4_2")
   time.sleep(5)
-  commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl start mysql-proxy-slave2_1")
-  commands.getoutput("ssh -t -t utada@ha6 sudo supervisorctl start mysql-proxy-slave2_2")
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl start mysql-proxy-slave2_1")
+  commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl start mysql-proxy-slave2_2")
   time.sleep(5)
   while 1:
     sys.stderr.write("failover finished : master1/slave1 has been purged\n")
@@ -234,15 +234,15 @@ def failover3():
 def failover4():
   # when master2 down (and M2 is master)
   sys.stderr.write("failover4(M2 master down)\n")
-  commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl stop mysql-proxy-master2_1")
-  commands.getoutput("ssh -t -t utada@ha6 sudo supervisorctl stop mysql-proxy-master2_2")
-  commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl stop mysql-proxy-slave4_1")
-  commands.getoutput("ssh -t -t utada@ha6 sudo supervisorctl stop mysql-proxy-slave4_2")
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl stop mysql-proxy-master2_1")
+  commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl stop mysql-proxy-master2_2")
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl stop mysql-proxy-slave4_1")
+  commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl stop mysql-proxy-slave4_2")
   time.sleep(5)
-  commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl start mysql-proxy-master1_1")
-  commands.getoutput("ssh -t -t utada@ha6 sudo supervisorctl start mysql-proxy-master1_2")
-  commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl start mysql-proxy-slave3_1")
-  commands.getoutput("ssh -t -t utada@ha6 sudo supervisorctl start mysql-proxy-slave3_2")
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl start mysql-proxy-master1_1")
+  commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl start mysql-proxy-master1_2")
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl start mysql-proxy-slave3_1")
+  commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl start mysql-proxy-slave3_2")
   time.sleep(5)
   while 1:
     sys.stderr.write("failover finished : master2/slave2 has been purged\n")
@@ -251,11 +251,11 @@ def failover4():
 
 def slave0_error():
   # when master2 slave is stopped
-  commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl stop mysql-proxy-slave1_1")
-  commands.getoutput("ssh -t -t utada@ha6 sudo supervisorctl stop mysql-proxy-slave1_2")
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl stop mysql-proxy-slave1_1")
+  commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl stop mysql-proxy-slave1_2")
   time.sleep(5)
-  commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl start mysql-proxy-slave3_1")
-  commands.getoutput("ssh -t -t utada@ha6 sudo supervisorctl start mysql-proxy-slave3_2")
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl start mysql-proxy-slave3_1")
+  commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl start mysql-proxy-slave3_2")
   time.sleep(5)
   while 1:
     sys.stderr.write("failover finished : master2/slave2 has been purged\n")
@@ -280,11 +280,11 @@ def slave0_2_error():
 def slave1_error():
   # when slave1 slave is stopped
   sys.stderr.write("slave1 error\n")
-  commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl stop mysql-proxy-slave1_1")
-  commands.getoutput("ssh -t -t utada@ha6 sudo supervisorctl stop mysql-proxy-slave1_2")
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl stop mysql-proxy-slave1_1")
+  commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl stop mysql-proxy-slave1_2")
   time.sleep(5)
-  commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl start mysql-proxy-slave5_1")
-  commands.getoutput("ssh -t -t utada@ha6 sudo supervisorctl start mysql-proxy-slave5_2")
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl start mysql-proxy-slave5_1")
+  commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl start mysql-proxy-slave5_2")
   time.sleep(5)
   while 1:
     sys.stderr.write("failover finished : slave1 has been purged\n")
@@ -294,11 +294,11 @@ def slave1_error():
 def slave2_error():
   # when slave2 slave is stopped
   sys.stderr.write("slave2 error\n")
-  commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl stop mysql-proxy-slave1_1")
-  commands.getoutput("ssh -t -t utada@ha6 sudo supervisorctl stop mysql-proxy-slave1_2")
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl stop mysql-proxy-slave1_1")
+  commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl stop mysql-proxy-slave1_2")
   time.sleep(5)
-  commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl start mysql-proxy-slave6_1")
-  commands.getoutput("ssh -t -t utada@ha6 sudo supervisorctl start mysql-proxy-slave6_2")
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl start mysql-proxy-slave6_1")
+  commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl start mysql-proxy-slave6_2")
   time.sleep(5)
   while 1:
     sys.stderr.write("failover finished : slave2 has been purged\n")
@@ -313,10 +313,10 @@ def watch_m1():
   read_only_off(master1)
   read_only_on(master2)
   start_slave(master2)
-  commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl start mysql-proxy-master1_1")
-  commands.getoutput("ssh -t -t utada@ha6 sudo supervisorctl start mysql-proxy-master1_2")
-  commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl start mysql-proxy-slave1_1")
-  commands.getoutput("ssh -t -t utada@ha6 sudo supervisorctl start mysql-proxy-slave1_2")
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl start mysql-proxy-master1_1")
+  commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl start mysql-proxy-master1_2")
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl start mysql-proxy-slave1_1")
+  commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl start mysql-proxy-slave1_2")
   i = 0
   while 1:
     # check master1
@@ -454,10 +454,10 @@ def watch_m2():
   read_only_off(master2)
   read_only_on(master1)
   start_slave(master1)
-  commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl start mysql-proxy-master2_1")
-  commands.getoutput("ssh -t -t utada@ha6 sudo supervisorctl start mysql-proxy-master2_2")
-  commands.getoutput("ssh -t -t utada@ha5 sudo supervisorctl start mysql-proxy-slave4_1")
-  commands.getoutput("ssh -t -t utada@ha6 sudo supervisorctl start mysql-proxy-slave4_2")
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl start mysql-proxy-master2_1")
+  commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl start mysql-proxy-master2_2")
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl start mysql-proxy-slave4_1")
+  commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl start mysql-proxy-slave4_2")
   i = 0
   while 1:
     # check master1

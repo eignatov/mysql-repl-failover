@@ -370,7 +370,7 @@ def watch_m1():
     # status check slave2
     sys.stderr.write("%d: check slave2 status at %s\n" % (i, time.ctime()))
     if (conn_slave2(conf)):
-      slave1_err_cnt = 0
+      slave2_err_cnt = 0
       sys.stderr.write("ok\n")
     else:
       sys.stderr.write("slave2 fail detected!\n")
@@ -390,12 +390,12 @@ def watch_m1():
     for row in r:
       slave_running = row[1]
     if slave_running == "ON":
-      slave0_err_cnt = 0
+      slave0_repl_err_cnt = 0
       sys.stderr.write("ok\n")
     else:
       sys.stderr.write("replication slave stop detected on master2!\n")
-      slave0_err_cnt += 1
-      if slave0_err_cnt > 5:
+      slave0_repl_err_cnt += 1
+      if slave0_repl_err_cnt > 5:
         sys.stderr.write("replication error on master2: purging master2 from slave\n")
         slave0_error()
         break
@@ -410,12 +410,12 @@ def watch_m1():
     for row in r:
       slave_running = row[1]
     if slave_running == "ON":
-      slave1_err_cnt = 0
+      slave1_repl_err_cnt = 0
       sys.stderr.write("ok\n")
     else:
       sys.stderr.write("replication slave stop detected on slave1! \n")
-      slave1_err_cnt += 1
-      if slave1_err_cnt > 5:
+      slave1_repl_err_cnt += 1
+      if slave1_repl_err_cnt > 5:
         sys.stderr.write("replication error on slave1: purging slave1 from slave\n")
         slave1_error()
         break
@@ -430,12 +430,12 @@ def watch_m1():
     for row in r:
       slave_running = row[1]
     if slave_running == "ON":
-      slave2_err_cnt = 0
+      slave2_repl_err_cnt = 0
       sys.stderr.write("ok\n")
     else:
       sys.stderr.write("replication slave stop detected on slave2! \n")
-      slave2_err_cnt += 1
-      if slave2_err_cnt > 5:
+      slave2_repl_err_cnt += 1
+      if slave2_repl_err_cnt > 5:
         sys.stderr.write("replication error on slave2: purging slave2 from slave\n")
         slave2_error()
         break
@@ -589,7 +589,6 @@ def watch_m2():
     i += 1
 
 if __name__ == '__main__':
-
   CONFIG_FILE = os.path.dirname(sys.argv[0])+'/setting.ini'
   conf = ConfigParser.SafeConfigParser()
   conf.read(CONFIG_FILE)
@@ -600,10 +599,6 @@ if __name__ == '__main__':
     print 'Usage: ha.py <m1|m2>'
     quit()
 
-  #master1 = conn_master1(conf)
-  #master2 = conn_master2(conf)
-  #slave1 = conn_slave1(conf)
-  #slave2 = conn_slave2(conf)
   if (argvs[1] == 'm1'):
     ## when m1 is master
     watch_m1()

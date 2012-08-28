@@ -186,6 +186,11 @@ def failover1():
   master2 = conn_master2(conf)
   # when master1 down
   sys.stderr.write("failover1\n")
+
+  # replication slave check script
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl stop repl-slave-m2")
+
+  # mysql-proxy
   commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl stop mysql-proxy-master1_1")
   commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl stop mysql-proxy-master1_2")
   commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl stop mysql-proxy-slave1_1")
@@ -206,6 +211,11 @@ def failover1():
 def failover2():
   # when master2 down
   sys.stderr.write("failover2\n")
+
+  # replication slave check script
+  commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl stop repl-slave-m1")
+
+  # mysql-proxy
   commands.getoutput("ssh -t -t mysql@ha5 sudo supervisorctl stop mysql-proxy-slave1_1")
   commands.getoutput("ssh -t -t mysql@ha6 sudo supervisorctl stop mysql-proxy-slave1_2")
   time.sleep(5)
@@ -351,7 +361,7 @@ def watch_m1():
       i += 1
       continue
 
-    # status check slave1
+    # check slave1
     sys.stderr.write("%d: check slave1 status at %s\n" % (i, time.ctime()))
     if (conn_slave1(conf)):
       slave1_err_cnt = 0
@@ -367,7 +377,7 @@ def watch_m1():
       i += 1
       continue
 
-    # status check slave2
+    # check slave2
     sys.stderr.write("%d: check slave2 status at %s\n" % (i, time.ctime()))
     if (conn_slave2(conf)):
       slave2_err_cnt = 0
@@ -384,64 +394,64 @@ def watch_m1():
       continue
 
     # check replication slave at master2
-    master2 = conn_master2(conf)
-    sys.stderr.write("%d: check replication slave on master2 at %s\n" % (i, time.ctime()))
-    r = is_slave_running(master2)
-    for row in r:
-      slave_running = row[1]
-    if slave_running == "ON":
-      slave0_repl_err_cnt = 0
-      sys.stderr.write("ok\n")
-    else:
-      sys.stderr.write("replication slave stop detected on master2!\n")
-      slave0_repl_err_cnt += 1
-      if slave0_repl_err_cnt > 5:
-        sys.stderr.write("replication error on master2: purging master2 from slave\n")
-        slave0_error()
-        break
-      time.sleep(5)
-      i += 1
-      continue
+    #master2 = conn_master2(conf)
+    #sys.stderr.write("%d: check replication slave on master2 at %s\n" % (i, time.ctime()))
+    #r = is_slave_running(master2)
+    #for row in r:
+    #  slave_running = row[1]
+    #if slave_running == "ON":
+    #  slave0_repl_err_cnt = 0
+    #  sys.stderr.write("ok\n")
+    #else:
+    #  sys.stderr.write("replication slave stop detected on master2!\n")
+    #  slave0_repl_err_cnt += 1
+    #  if slave0_repl_err_cnt > 5:
+    #    sys.stderr.write("replication error on master2: purging master2 from slave\n")
+    #    slave0_error()
+    #    break
+    #  time.sleep(5)
+    #  i += 1
+    #  continue
 
     # check replication slave at slave1
-    slave1 = conn_slave1(conf)
-    sys.stderr.write("%d: check replication slave on slave1 at %s\n" % (i, time.ctime()))
-    r = is_slave_running(slave1)
-    for row in r:
-      slave_running = row[1]
-    if slave_running == "ON":
-      slave1_repl_err_cnt = 0
-      sys.stderr.write("ok\n")
-    else:
-      sys.stderr.write("replication slave stop detected on slave1! \n")
-      slave1_repl_err_cnt += 1
-      if slave1_repl_err_cnt > 5:
-        sys.stderr.write("replication error on slave1: purging slave1 from slave\n")
-        slave1_error()
-        break
-      time.sleep(5)
-      i += 1
-      continue
+    #slave1 = conn_slave1(conf)
+    #sys.stderr.write("%d: check replication slave on slave1 at %s\n" % (i, time.ctime()))
+    #r = is_slave_running(slave1)
+    #for row in r:
+    #  slave_running = row[1]
+    #if slave_running == "ON":
+    #  slave1_repl_err_cnt = 0
+    #  sys.stderr.write("ok\n")
+    #else:
+    #  sys.stderr.write("replication slave stop detected on slave1! \n")
+    #  slave1_repl_err_cnt += 1
+    #  if slave1_repl_err_cnt > 5:
+    #    sys.stderr.write("replication error on slave1: purging slave1 from slave\n")
+    #    slave1_error()
+    #    break
+    #  time.sleep(5)
+    #  i += 1
+    #  continue
 
     # check replication slave at slave2
-    slave2 = conn_slave2(conf)
-    sys.stderr.write("%d: check replication slave on slave2 at %s\n" % (i, time.ctime()))
-    r = is_slave_running(slave2)
-    for row in r:
-      slave_running = row[1]
-    if slave_running == "ON":
-      slave2_repl_err_cnt = 0
-      sys.stderr.write("ok\n")
-    else:
-      sys.stderr.write("replication slave stop detected on slave2! \n")
-      slave2_repl_err_cnt += 1
-      if slave2_repl_err_cnt > 5:
-        sys.stderr.write("replication error on slave2: purging slave2 from slave\n")
-        slave2_error()
-        break
-      time.sleep(5)
-      i += 1
-      continue
+    #slave2 = conn_slave2(conf)
+    #sys.stderr.write("%d: check replication slave on slave2 at %s\n" % (i, time.ctime()))
+    #r = is_slave_running(slave2)
+    #for row in r:
+    #  slave_running = row[1]
+    #if slave_running == "ON":
+    #  slave2_repl_err_cnt = 0
+    #  sys.stderr.write("ok\n")
+    #else:
+    #  sys.stderr.write("replication slave stop detected on slave2! \n")
+    #  slave2_repl_err_cnt += 1
+    #  if slave2_repl_err_cnt > 5:
+    #    sys.stderr.write("replication error on slave2: purging slave2 from slave\n")
+    #    slave2_error()
+    #    break
+    #  time.sleep(5)
+    #  i += 1
+    #  continue
 
     time.sleep(5)
     i += 1
@@ -492,7 +502,7 @@ def watch_m2():
       i += 1
       continue
 
-    # status check slave1
+    # check slave1
     sys.stderr.write("%d: check slave1 status at %s\n" % (i, time.ctime()))
     r = slave_status(slave1)
     if (conn_slave1(conf)):
@@ -509,7 +519,7 @@ def watch_m2():
       i += 1
       continue
 
-    # status check slave2
+    # check slave2
     sys.stderr.write("%d: check slave2 status at %s\n" % (i, time.ctime()))
     if (conn_slave2(conf)):
       slave1_err_cnt = 0
@@ -526,64 +536,64 @@ def watch_m2():
       continue
 
     # check replication slave at master1
-    master1 = conn_master1(conf)
-    sys.stderr.write("%d: check replication slave on master1 at %s\n" % (i, time.ctime()))
-    r = is_slave_running(master1)
-    for row in r:
-      slave_running = row[1]
-    if slave_running == "ON":
-      slave0_err_cnt = 0
-      sys.stderr.write("ok\n")
-    else:
-      sys.stderr.write("replication slave stop detected on master1!\n")
-      slave0_err_cnt += 1
-      if slave0_err_cnt > 5:
-        sys.stderr.write("replication error on master1: purging master1 from slave\n")
-        slave0_2_error()
-        break
-      time.sleep(5)
-      i += 1
-      continue
+    #master1 = conn_master1(conf)
+    #sys.stderr.write("%d: check replication slave on master1 at %s\n" % (i, time.ctime()))
+    #r = is_slave_running(master1)
+    #for row in r:
+    #  slave_running = row[1]
+    #if slave_running == "ON":
+    #  slave0_err_cnt = 0
+    #  sys.stderr.write("ok\n")
+    #else:
+    #  sys.stderr.write("replication slave stop detected on master1!\n")
+    #  slave0_err_cnt += 1
+    #  if slave0_err_cnt > 5:
+    #    sys.stderr.write("replication error on master1: purging master1 from slave\n")
+    #    slave0_2_error()
+    #    break
+    #  time.sleep(5)
+    #  i += 1
+    #  continue
 
     # check replication slave at slave1
-    slave1 = conn_slave1(conf)
-    sys.stderr.write("%d: check replication slave on slave1 at %s\n" % (i, time.ctime()))
-    r = is_slave_running(slave1)
-    for row in r:
-      slave_running = row[1]
-    if slave_running == "ON":
-      slave1_err_cnt = 0
-      sys.stderr.write("ok\n")
-    else:
-      sys.stderr.write("replication slave stop detected on slave1! \n")
-      slave1_err_cnt += 1
-      if slave1_err_cnt > 5:
-        sys.stderr.write("replication error on slave1: purging slave1 from slave\n")
-        slave1_error()
-        break
-      time.sleep(5)
-      i += 1
-      continue
+    #slave1 = conn_slave1(conf)
+    #sys.stderr.write("%d: check replication slave on slave1 at %s\n" % (i, time.ctime()))
+    #r = is_slave_running(slave1)
+    #for row in r:
+    #  slave_running = row[1]
+    #if slave_running == "ON":
+    #  slave1_err_cnt = 0
+    #  sys.stderr.write("ok\n")
+    #else:
+    #  sys.stderr.write("replication slave stop detected on slave1! \n")
+    #  slave1_err_cnt += 1
+    #  if slave1_err_cnt > 5:
+    #    sys.stderr.write("replication error on slave1: purging slave1 from slave\n")
+    #    slave1_error()
+    #    break
+    #  time.sleep(5)
+    #  i += 1
+    #  continue
 
     # check replication slave at slave2
-    slave2 = conn_slave2(conf)
-    sys.stderr.write("%d: check replication slave on slave2 at %s\n" % (i, time.ctime()))
-    r = is_slave_running(slave2)
-    for row in r:
-      slave_running = row[1]
-    if slave_running == "ON":
-      slave2_err_cnt = 0
-      sys.stderr.write("ok\n")
-    else:
-      sys.stderr.write("replication slave stop detected on slave2! \n")
-      slave2_err_cnt += 1
-      if slave2_err_cnt > 5:
-        sys.stderr.write("replication error on slave2: purging slave2 from slave\n")
-        slave2_error()
-        break
-      time.sleep(5)
-      i += 1
-      continue
+    #slave2 = conn_slave2(conf)
+    #sys.stderr.write("%d: check replication slave on slave2 at %s\n" % (i, time.ctime()))
+    #r = is_slave_running(slave2)
+    #for row in r:
+    #  slave_running = row[1]
+    #if slave_running == "ON":
+    #  slave2_err_cnt = 0
+    #  sys.stderr.write("ok\n")
+    #else:
+    #  sys.stderr.write("replication slave stop detected on slave2! \n")
+    #  slave2_err_cnt += 1
+    #  if slave2_err_cnt > 5:
+    #    sys.stderr.write("replication error on slave2: purging slave2 from slave\n")
+    #    slave2_error()
+    #    break
+    #  time.sleep(5)
+    #  i += 1
+    #  continue
 
     time.sleep(5)
     i += 1
